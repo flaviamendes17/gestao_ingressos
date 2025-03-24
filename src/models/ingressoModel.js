@@ -15,6 +15,15 @@ const createIngresso = async (ingresso) => {
         "INSERT INTO ingressos (nome_evento, local, data_evento, preco, disponibilidade) VALUES ($1, $2, $3, $4) RETURNING *",
         [nome_evento, local, data_evento, preco, disponibilidade]
     );
+    if (categoria = "Pista" && preco < 100) {
+        return { error: "Preço inválido para categoria Pista" };
+    } else if (categoria = "Pista VIP" && preco < 200) {
+        return { error: "Preço inválido para categoria Pista VIP" };
+    }else if (categoria = "Camarote" && preco < 300) {
+        return { error: "Preço inválido para categoria Camarote" };
+    }else if (categoria = "Arquibancada" && preco < 400) {
+        return { error: "Preço inválido para categoria Arquibancada" };
+    }
     return result.rows[0];
 };
 
@@ -34,4 +43,13 @@ const deleteIngresso = async (id) => {
     return { message: "Ingresso deletado com sucesso" };
 };
 
-module.exports = { getIngressos, getIngressosById, createIngresso, updateIngresso, deleteIngresso };
+const createVenda = async (id_ingresso, id_quantidade) => {
+    const result = await pool.query(
+        "UPDATE ingressos SET disponibilidade = disponibilidade - $1 WHERE id = $2 RETURNING *",
+        [id_quantidade, id_ingresso]
+    );
+    return { message: "Venda realizada com sucesso" };
+
+}
+
+module.exports = { getIngressos, getIngressosById, createIngresso, updateIngresso, deleteIngresso, createVenda };
