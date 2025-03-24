@@ -55,4 +55,17 @@ const deleteIngresso = async (req, res) => {
     }
 };
 
-module.exports = { getAllIngressos, getIngressos, createIngresso, updateIngresso, deleteIngresso };
+const createVenda = async (req, res) => {
+    try {
+        const { id_ingresso, id_quantidade } = req.body;
+        const newVenda = await ingressoModel.createVenda(id_ingresso, id_quantidade);
+        res.status(201).json(newVenda);
+    } catch (error) {
+        console.log(error);
+        if (error.code === "23505")
+            return res.status(400).json({ message: "Venda já cadastro"});
+        res.status(500).json({ message: "Erro ao criar venda" });
+    }
+};
+
+module.exports = { getAllIngressos, getIngressos, createIngresso, updateIngresso, deleteIngresso, createVenda };
