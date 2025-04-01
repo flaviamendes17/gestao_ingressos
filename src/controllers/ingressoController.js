@@ -1,4 +1,5 @@
 const ingressoModel = require("../models/ingressoModel");
+const pool = require("../config/database");
 
 const getAllIngressos = async (req, res) => {
     try {
@@ -23,26 +24,45 @@ const getIngressos = async (req, res) => {
 
 const createIngresso = async (req, res) => {
     try {
-        const { nome_evento, local, data_evento, preco, disponibilidade } = req.body;
-        const newIngresso = await ingressoModel.createIngresso(nome_evento, local, data_evento, preco, disponibilidade);
-        res.status(201).json(newIngresso);
+        const ingresso = req.body;
+
+    
+        const result = await ingressoModel.createIngresso(ingresso);
+    
+        if (result.error) {
+            return res.status(400).json({ error: result.error });
+        }
+
+        
+        return res.status(201).json(result);
     } catch (error) {
-        console.log(error);
-        if (error.code === "23505")
-            return res.status(400).json({ message: "Ingresso já cadastro"});
+        console.error(error);
+        return res.status(500).json({ error: "Erro interno do servidor" });
     }
-    res.status(500).json({ message: "Erro ao criar ingresso" });
 };
 
 const updateIngresso = async (req, res) => {
     try {
-        const { nome_evento, local, data_evento, preco, disponibilidade } = req.body;
-        const ingresso = await ingressoModel.updateIngresso(req.params.id, nome_evento, local, data_evento, preco, disponibilidade);
-        if (!ingresso) {
-            return res.status(404).json({ message: "Ingresso não encontrado" });
+        const id = req.params.id;
+        const { nome_evento, local_evento, data_evento, preco, categoria, quantidade_ingressos } = req.body;
+
+        if (!id) {
+            return res.status(400).json({ error: "ID do ingresso não fornecido" });
         }
+
+        const result = await pool.query(
+            "UPDATE ingressos SET nome_evento = $1, local_evento = $2, data_evento = $3, preco = $4, categoria = $5, quantidade_ingressos = $6 WHERE id = $7 RETURNING *",
+            [nome_evento, local_evento, data_evento, preco, categoria, quantidade_ingressos, id]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: "Ingresso não encontrado" });
+        }
+
+        return res.status(200).json(result.rows[0]);
     } catch (error) {
-        res.status(500).json ({ message: "Erro ao atualizar ingresso"});
+        console.error(error);
+        return res.status(500).json({ error: "Erro interno do servidor" });
     }
 };
 
