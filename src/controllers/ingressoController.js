@@ -3,10 +3,11 @@ const pool = require("../config/database");
 
 const getAllIngressos = async (req, res) => {
     try {
-        const ingressos = await ingressoModel.getIngressos();
-        res.status(200).json(ingressos);
+        const {evento} = req.query;
+        const ingressos = await ingressoModel.getAllIngressos(evento);
+        res.json(ingressos);
     } catch (error) {
-        res.status(404).json ({ message: "Ingressos não encontrados" });
+        res.status(404).json({ message: "Erro ao buscar Ingressos." });
     }
 };
 
@@ -81,11 +82,30 @@ const createVenda = async (req, res) => {
         const newVenda = await ingressoModel.createVenda(id_ingresso, id_quantidade);
         res.status(201).json(newVenda);
     } catch (error) {
-        console.log(error);
-        if (error.code === "23505")
-            return res.status(400).json({ message: "Venda já cadastro"});
+        console.error("Erro ao criar venda:", error);
+        if (error.code === "23505") {
+            return res.status(400).json({ message: "Venda já cadastrada" });
+        }
         res.status(500).json({ message: "Erro ao criar venda" });
     }
 };
 
-module.exports = { getAllIngressos, getIngressos, createIngresso, updateIngresso, deleteIngresso, createVenda };
+const buscarIngressos = async (req, res) => {
+    try {
+        const { evento } = req.query;
+        const ingressos = await ingressoModel.getIngressos(evento);
+        res.status(200).json(ingressos);
+    } catch (error) {
+        console.error("Erro ao buscar ingressos:", error);
+        res.status(500).json({ message: "Erro ao buscar ingressos." });
+    }
+};
+
+module.exports = {
+    buscarIngressos,
+    getIngressos,
+    createIngresso,
+    updateIngresso,
+    deleteIngresso,
+    createVenda
+};

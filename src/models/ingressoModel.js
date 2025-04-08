@@ -7,15 +7,14 @@ app.use(express.json());
 const pool = require("../config/database");
 const ingressoModel = require("../models/ingressoModel");
 
-const getIngressos = async () => {
-    try {
-        console.log('Tentando buscar ingressos...');
-        const result = await pool.query('SELECT * FROM ingressos');
-        console.log('Ingressos encontrados:', result);
+const getIngressos = async (evento) => {
+    console.log(evento);
+    if (!evento) {
+        const result = await pool.query("SELECT * FROM ingressos");
         return result.rows;
-    } catch (error) {
-        console.error('Erro ao buscar ingressos:', error.message);
-        throw error;
+    } else {
+        const result = await pool.query("SELECT * FROM ingressos WHERE evento ILIKE $1", [`%${evento}%`]);
+        return result.rows;
     }
 };
 
@@ -77,11 +76,14 @@ const deleteIngresso = async (id) => {
 };
 
 const createVenda = async (id_ingresso, id_quantidade) => {
-    const result = await pool.query(
-        "UPDATE ingressos SET quantidade_ingressos = quantidade_ingressos - $1 WHERE id = $2 RETURNING *",
-        [id_quantidade, id_ingresso]
-    );
-    return { message: "Venda realizada com sucesso" };
+    const query = `
+        INSERT INTO vendas (id_ingresso, quantidade)
+        VALUES ($1, $2)
+        RETURNING *;
+    `;
+    const values = [id_ingresso, id_quantidade];
+    const result = await pool.query(query, values);
+    return result.rows[0];
 };
 
 module.exports = { getIngressos, getIngressosById, createIngresso, updateIngresso, deleteIngresso, createVenda };
